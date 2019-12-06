@@ -3,67 +3,124 @@
 #include <time.h>
 #include <math.h>
 #include "stackqueue.h"
-#define DAYS 31										//Dayì…ë‹ˆë‹¤
-#define SPEED (500.0)								// ë¹„í–‰ê¸°ì˜ ì†ë ¥ì…ë‹ˆë‹¤ 500km/hour
+#define DAYS 31										//DayÀÔ´Ï´Ù
+#define SPEED (500.0)								// ºñÇà±âÀÇ ¼Ó·ÂÀÔ´Ï´Ù 500km/hour
 
 
 typedef struct point {
 	char name;
 	int x, y;
-	int distance, needTime, departureTime;			// ê¸°ì¡´ì˜ distanceì´ì™¸ì— needtimeê³¼ departureTime, paths[26], pathsNumì´ ì¶”ê°€ë˜ì—ˆìŠµë‹ˆë‹¤.
-	struct point* next;								//distanceëŠ” adjency listì˜ edgeë¶€ë¶„ì—ì„œë§Œ í™œì„±í™”ë˜ë©°, defaultê°’ì€ -1ì´ê³ , addpathë¡œ ë“±ë¡ì‹œ ë‘ cityê°„ ê±°ë¦¬ê°€ ê¸°ë¡ë©ë‹ˆë‹¤.
-	char paths[26];									//needTimeì€ ë‹¤ì´ìŠ¤íŠ¸ë¼ ì•Œê³ ë¦¬ì¦˜ì˜ í•´ë‹¹ cityê¹Œì§€ í•„ìš”í•œ costë¡œì„œ, ê²½ë¡œìƒì˜ cityì™€ departureTimeê³¼ distanceì— ì˜í•´ ì‚°ì¶œë©ë‹ˆë‹¤.
-	int pathsNum;									//paths[26]ì€ í•´ë‹¹ cityê¹Œì§€ ìµœë‹¨ê±°ë¦¬ë¡œ ì˜¤ëŠ” cityì˜ ë¦¬ìŠ¤íŠ¸ì…ë‹ˆë‹¤. pathsNumì€ paths[26]ì˜ ê¸¸ì´ë¥¼ ë‚˜íƒ€ëƒ…ë‹ˆë‹¤
+	int distance, needTime, departureTime;			// ±âÁ¸ÀÇ distanceÀÌ¿Ü¿¡ needtime°ú departureTime, paths[26], pathsNumÀÌ Ãß°¡µÇ¾ú½À´Ï´Ù.
+	struct point* next;								//distance´Â adjency listÀÇ edgeºÎºĞ¿¡¼­¸¸ È°¼ºÈ­µÇ¸ç, default°ªÀº -1ÀÌ°í, addpath·Î µî·Ï½Ã µÎ city°£ °Å¸®°¡ ±â·ÏµË´Ï´Ù.
+	char paths[26];									//needTimeÀº ´ÙÀÌ½ºÆ®¶ó ¾Ë°í¸®ÁòÀÇ ÇØ´ç city±îÁö ÇÊ¿äÇÑ cost·Î¼­, °æ·Î»óÀÇ city¿Í departureTime°ú distance¿¡ ÀÇÇØ »êÃâµË´Ï´Ù.
+	int pathsNum;									//paths[26]Àº ÇØ´ç city±îÁö ÃÖ´Ü°Å¸®·Î ¿À´Â cityÀÇ ¸®½ºÆ®ÀÔ´Ï´Ù. pathsNumÀº paths[26]ÀÇ ±æÀÌ¸¦ ³ªÅ¸³À´Ï´Ù
 }City;
 typedef struct a {
 	int num;
 	City** heads;
 }Graph;
 
-Graph* CreateGraph(int num);						// numê°œì˜ cityê°€ ìˆëŠ” ê¸°ë³¸ ê·¸ë˜í”„ë¥¼ ìƒì„±í•©ë‹ˆë‹¤.
-void DestroyGraph(Graph* pgraph);					// ê·¸ë˜í”„ í•˜ë‚˜ë¥¼ ì „ë¶€ ë©”ëª¨ë¦¬ì— ë°˜í™˜í•©ë‹ˆë‹¤.
-void AddPath(Graph* pgraph, char src, char dest);	//pgraphë‚´ì˜ 2ê°œ cityê°„ì— bidriectional edgeë¥¼ 1ê°œ ìƒì„±í•©ë‹ˆë‹¤
-void AddPaths(Graph* pgraph, int num);				//pgraphë‚´ì— numê°œë§Œí¼ ëœë¤í•˜ê²Œ AddPathë¥¼ ì‹¤í–‰í•©ë‹ˆë‹¤.
-int PathExists(Graph* pgraph, char src, char dst);  // AddPathì—ë§Œ í™œìš©ë˜ëŠ” í•¨ìˆ˜ì…ë‹ˆë‹¤. ê¸°ì¡´ ê·¸ë˜í”„ì— ë™ì¼ pathê°€ ìƒì„±ë˜ì–´ìˆëŠ”ì§€ í™•ì¸í•©ë‹ˆë‹¤.
-Graph** CreateTimeTable(Graph* pgraph);				//ê¸°ë³¸ ê·¸ë˜í”„ pgraphì— departure timeì„ í• ë‹¹í•œ 31ê°€ì§€ ê·¸ë˜í”„ë¥¼ ë§Œë“­ë‹ˆë‹¤.
-void PrintGraph(Graph* pgraph);						//1ê°œ graphì˜ ë‚´ìš©ì„ ì¶œë ¥í•©ë‹ˆë‹¤.
-City* ShortestPath(Graph* pgraph, int src, int dst);	// pgraphë‚´ì— ë‚´ìš©ì„ ê¸°ë¡í•œ í›„ ìµœì¢… ëª©ì ë„ì‹œë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤. 
-			//ì—¬ê¸°ì„œ needTimeì„ ì°¸ì¡°í•˜ë©´ ë„ì°©ì˜ˆì •ì‹œê°„, pathsë¥¼ ì°¸ì¡°í•˜ë©´ ê²½ë¡œìƒcityê°€ ë‹´ê¸´array, pathsNumì€ pathsArrayì˜ ê¸¸ì´ë¥¼ ë‚˜íƒ€ëƒ…ë‹ˆë‹¤.
-City* ExtractMin(City** Q, int* qNum);				// ShortestPathë‚´ì—ì„œë§Œ ì“°ì´ëŠ” í•¨ìˆ˜ë¡œì„œ ìˆ˜ë„ì½”ë“œì˜ ExtractMinê³¼ ë™ì¼í•©ë‹ˆë‹¤.
-void PrintArray(char* arr, int num);			// char arrayì¸ì‡„.
+typedef struct {
+	char name[20],source, destination;
+	int departureTime, departureDate, arrivalTime, arrivalDate, flightTime;
+	char flightPath[30];
+}output;
 
+Graph* CreateGraph(int num);						// num°³ÀÇ city°¡ ÀÖ´Â ±âº» ±×·¡ÇÁ¸¦ »ı¼ºÇÕ´Ï´Ù.
+void DestroyGraph(Graph* pgraph);					// ±×·¡ÇÁ ÇÏ³ª¸¦ ÀüºÎ ¸Ş¸ğ¸®¿¡ ¹İÈ¯ÇÕ´Ï´Ù.
+void AddPath(Graph* pgraph, char src, char dest);	//pgraph³»ÀÇ 2°³ city°£¿¡ bidriectional edge¸¦ 1°³ »ı¼ºÇÕ´Ï´Ù
+void AddPaths(Graph* pgraph, int num);				//pgraph³»¿¡ num°³¸¸Å­ ·£´ıÇÏ°Ô AddPath¸¦ ½ÇÇàÇÕ´Ï´Ù.
+int PathExists(Graph* pgraph, char src, char dst);  // AddPath¿¡¸¸ È°¿ëµÇ´Â ÇÔ¼öÀÔ´Ï´Ù. ±âÁ¸ ±×·¡ÇÁ¿¡ µ¿ÀÏ path°¡ »ı¼ºµÇ¾îÀÖ´ÂÁö È®ÀÎÇÕ´Ï´Ù.
+Graph** CreateTimeTable(Graph* pgraph);				//±âº» ±×·¡ÇÁ pgraph¿¡ departure timeÀ» ÇÒ´çÇÑ 31°¡Áö ±×·¡ÇÁ¸¦ ¸¸µì´Ï´Ù.
+void PrintGraph(Graph* pgraph);						//1°³ graphÀÇ ³»¿ëÀ» Ãâ·ÂÇÕ´Ï´Ù.
+City* ShortestPath(Graph* pgraph, int src, int dst);	// pgraph³»¿¡ ³»¿ëÀ» ±â·ÏÇÑ ÈÄ ÃÖÁ¾ ¸ñÀûµµ½Ã¸¦ ¹İÈ¯ÇÕ´Ï´Ù. 
+			//¿©±â¼­ needTimeÀ» ÂüÁ¶ÇÏ¸é µµÂø¿¹Á¤½Ã°£, paths¸¦ ÂüÁ¶ÇÏ¸é °æ·Î»ócity°¡ ´ã±äarray, pathsNumÀº pathsArrayÀÇ ±æÀÌ¸¦ ³ªÅ¸³À´Ï´Ù.
+City* ExtractMin(City** Q, int* qNum);				// ShortestPath³»¿¡¼­¸¸ ¾²ÀÌ´Â ÇÔ¼ö·Î¼­ ¼öµµÄÚµåÀÇ ExtractMin°ú µ¿ÀÏÇÕ´Ï´Ù.
+void PrintArray(char* arr);			// char arrayÀÎ¼â.
+void PrintResult(output *values);
+output* module(char* name, char source, char destination, int date);
+
+Graph *pgraph, ** pgraphs;
 int main() {
 	srand(time(NULL));
-	int day;
-	char src;
+	pgraph = CreateGraph(26);			//26°³ city¸¦ »ı¼ºÇÕ´Ï´Ù.
+	AddPaths(pgraph, 100);						//ÇØ´ç 26°³ city°£¿¡ path¸¦ ¹«ÀÛÀ§·Î 100°³¸¦ »ı¼ºÇÕ´Ï´Ù.
+	pgraphs = CreateTimeTable(pgraph);	//À§¿¡ »ı¼ºµÈ path¿¡ ¹«ÀÛÀ§ departureTimeÀ» ºÎ¿©ÇÑ graph 31°³¸¦ »ı¼ºÇÕ´Ï´Ù.
+
+	//from here//
+	char name[20]="james",src,dst, day;
 	printf("Graph project\n");
+	/*printf("Enter the name: "); scanf("%s", &name); getchar();
 	printf("Enter the day: "); scanf("%d", &day); getchar();
-	//day = 31;
-	printf("Enter the source city (a~z): "); scanf("%c", &src);
-	//src = e;
-	Graph* pgraph = CreateGraph(26);			//26ê°œ cityë¥¼ ìƒì„±í•©ë‹ˆë‹¤.
-	AddPaths(pgraph, 100);						//í•´ë‹¹ 26ê°œ cityê°„ì— pathë¥¼ ë¬´ì‘ìœ„ë¡œ 100ê°œë¥¼ ìƒì„±í•©ë‹ˆë‹¤.
-	Graph** pgraphs = CreateTimeTable(pgraph);	//ìœ„ì— ìƒì„±ëœ pathì— ë¬´ì‘ìœ„ departureTimeì„ ë¶€ì—¬í•œ graph 31ê°œë¥¼ ìƒì„±í•©ë‹ˆë‹¤.
-	PrintGraph(pgraphs[day - 1]);						// 3+1=4ì¼ìì˜ depatureTimeì´ ë‹´ê¸´ ê·¸ë˜í”„ë¥¼ ì¶œë ¥í•©ë‹ˆë‹¤.
-	printf("%dì¼ìì— %cë„ì‹œì—ì„œ ì´ë™ê°€ëŠ¥í•œ ë„ì‹œì˜ ì •ë³´ëŠ” ì•„ë˜ì™€ ê°™ìŠµë‹ˆë‹¤.\n", day, src);
-	for (char dst = 'a'; dst <= 'z'; dst++) {	// ì„ì˜ì˜ ëª©ì ì§€ì— ëŒ€í•˜ì—¬ ì¶œë ¥
-		if (dst == src) continue;
-		City* dstCity = ShortestPath(pgraphs[4 - 1], src, dst);
-		if (dstCity->needTime > 0) {				//ì œëŒ€ë¡œ ì°¾ìŒ ã…
-			printf("%c to %c : %2dh %2dm ", src, dst, dstCity->needTime / 60, dstCity->needTime % 60);
-			PrintArray(dstCity->paths, dstCity->pathsNum);
-		}
-		//else printf("a to %c is no path\n",i);
-	}
-	DestroyGraph(pgraph);						//ë©”ëª¨ë¦¬í•´ì œ
+	printf("Enter the source city (a~z): "); scanf("%c", &src); getchar();
+	printf("Enter the destination city (a~z): "); scanf("%c", &dst); getchar();*/
+	day = 31; src = 'e'; dst = 'f';
+
+	output *values = module(name, src, dst, day);
+	PrintResult(values);
+	//to here//
+
+	DestroyGraph(pgraph);						//¸Ş¸ğ¸®ÇØÁ¦
 	for (int i = 0; i < DAYS; i++) DestroyGraph(pgraphs[i]);
 	return 0;
 }
-void PrintArray(char* arr, int num) {
+void PrintResult(output* values) {
+	if (values == NULL) {
+		printf("no path.");
+		return;
+	}
+	printf("name: %s source: %c destination: %c \n", values->name, values->source, values->destination);
+	printf("departureTime: %3dh %3dm departureDate:%3d\n", values->departureTime / 60, values->departureTime % 60, values->departureDate);
+	printf("arrivalTime  : %3dh %3dm arrivalDate:%3d\n", values->arrivalTime / 60, values->arrivalTime % 60, values->arrivalDate);
+	printf("flightTime   : %3dh %3dm flightPath: ", values->flightTime / 60, values->flightTime % 60);
+	PrintArray(values->flightPath);
+}
+output* module(char* name,char source, char destination, int date) {
+	output* result = (output*)malloc(sizeof(output));
+	char src = source, dst= destination;
+	int day = date; 
+	for (int i = 0; i < 20; i++) result->name[i] = name[i];
+	
+
+	
+	//PrintGraph(pgraphs[day - 1]);						// 3+1=4ÀÏÀÚÀÇ depatureTimeÀÌ ´ã±ä ±×·¡ÇÁ¸¦ Ãâ·ÂÇÕ´Ï´Ù.
+	City* srcCity = pgraphs[day - 1]->heads[src - 'a'];
+	//printf("%dÀÏÀÚ¿¡ %cµµ½Ã¿¡¼­ ÀÌµ¿°¡´ÉÇÑ µµ½ÃÀÇ Á¤º¸´Â ¾Æ·¡¿Í °°½À´Ï´Ù.(±İÀÏ 0½Ã±âÁØ µµÂø½Ã½Ã°£, °ÅÃÄ¾ßÇÏ´Â µµ½Ãµé)\n", day, src);
+	//printf("departure time and date: %dh %dm %dday,", srcCity->departureTime / 60, srcCity->departureTime % 60, day);
+	City* dstCity = ShortestPath(pgraphs[day - 1], src, dst);
+	if (dstCity->needTime > 0) {				//Á¦´ë·Î Ã£À½ ¤¾
+		//printf("%c to %c : %2dh %2dm ", src, dst, dstCity->needTime / 60, dstCity->needTime % 60);
+		//PrintArray(dstCity->paths, dstCity->pathsNum);
+		result->source = src;
+		result->destination = dst;
+		for (int i = 0; i < dstCity->pathsNum; i++) result->flightPath[i] = dstCity->paths[i];
+		result->flightPath[dstCity->pathsNum] = '\0';
+		City* adj = pgraphs[day - 1]->heads[src - 'a'];
+		while (adj->next != NULL) {
+			adj = adj->next;
+			if (adj->name == dstCity->paths[1]) {
+				result->departureTime = adj->departureTime;
+				result->departureDate = day;
+				break;
+			}
+		}
+		result->arrivalTime = dstCity->needTime;
+		result->arrivalDate = day;
+		result->flightTime = (result->arrivalTime) - (result->departureTime);
+		if (result->arrivalTime / 60 >= 24) {
+			result->arrivalTime -= 24 * 60;
+			result->arrivalDate++;
+		}
+	}
+	else result = NULL;
+	
+	return result;
+}
+void PrintArray(char* arr) {
 	printf("(");
-	for (int i = 0; i < num; i++) {
-		printf("%c", arr[i]);
-		if (i != num - 1) printf(" ");
+	int i = 0;
+	while(arr[i]!='\0'){
+		printf("%c ", arr[i++]);
 	}
 	printf(")\n");
 }
@@ -104,7 +161,7 @@ void DestroyGraph(Graph* pgraph) {
 }
 void AddPath(Graph* pgraph, char src, char dest) {
 	if (PathExists(pgraph, src, dest) == 1) {
-		printf("Path exists!\n");
+		//printf("Path exists!\n");
 		return;
 	}
 	City* newCity1, * newCity2, * head1, * head2, * cur;
@@ -267,7 +324,7 @@ City* ShortestPath(Graph* pgraph, int src, int dst) {
 			adj = adj->next;
 			v = heads[adj->name - 'a'];
 			arrive = adj->departureTime + (int)(adj->distance / SPEED * 60);
-			//pathTime += (adj->departureTime - u->needTime);// waiting Time ì¶œë°œì‹œê°„ì´ ì†Œìš”ì‹œê°„ë³´ë‹¤ì ì€ê²½ìš°ëŠ” ì—†ë‹¤ ì•„ë˜ì„œê±¸ëŸ¬ì§
+			//pathTime += (adj->departureTime - u->needTime);// waiting Time Ãâ¹ß½Ã°£ÀÌ ¼Ò¿ä½Ã°£º¸´ÙÀûÀº°æ¿ì´Â ¾ø´Ù ¾Æ·¡¼­°É·¯Áü
 			oldNeedTime = v->needTime;
 			for (int i = 0; i < v->pathsNum; i++) {
 				oldPaths[i] = v->paths[i];
@@ -279,7 +336,7 @@ City* ShortestPath(Graph* pgraph, int src, int dst) {
 				v->paths[u->pathsNum] = v->name;
 				v->pathsNum = u->pathsNum + 1;
 			}
-			if (u->needTime > adj->departureTime) {//ì—¬ê¸°ì—ì„œ ê±¸ëŸ¬ì§
+			if (u->needTime > adj->departureTime) {//¿©±â¿¡¼­ °É·¯Áü
 				v->needTime = oldNeedTime;
 				for (int i = 0; i < v->pathsNum; i++) v->paths[i] = oldPaths[i];
 				v->pathsNum = oldPathsNum;
@@ -290,5 +347,6 @@ City* ShortestPath(Graph* pgraph, int src, int dst) {
 	//if (u != NULL) printf("\n");
 	//for (int i = 0; i < heads[dst - 'a']->pathsNum; i++) printf("%c ", heads[dst - 'a']->paths[i]);
 	//result = heads[dst - 'a']->needTime;
+	heads[dst - 'a']->paths[heads[dst - 'a']->pathsNum] = '\0';
 	return heads[dst - 'a'];
 }
