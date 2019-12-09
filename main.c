@@ -498,6 +498,7 @@ City* ShortestPath(Graph** pgraphs, int depDate, int src, int dst) {
 				}
 				else {
 					SetDepartureTime(pgraphs, oldnowDate);		//날짜에 따른 departureTime반영
+					nowDate = oldnowDate;						// nowdate복구
 					//if(oldnowDate!=2) printf("hihi%d", oldnowDate);
 					break;
 				}
