@@ -34,10 +34,10 @@ typedef struct {
 typedef struct Node {
 	int key;//= reservation number
 	int color;
-	struct Node * parent;
-	struct Node * leftc;
-	struct Node * rightc;
-	Passenger * passenger;
+	struct Node* parent;
+	struct Node* leftc;
+	struct Node* rightc;
+	Passenger* passenger;
 }node;
 node* root;
 node* nil;
@@ -49,15 +49,15 @@ node* nil;
 node* makenode(int key);
 void initTree();
 node* isexist(node* root, int key);
-void Lrotate( node* cur);
+void Lrotate(node* cur);
 void Rrotate(node* cur);
-void insert_fixup( node* cur);
+void insert_fixup(node* cur);
 node* insert(node* nod);
 node* minnode(node* cur);
 node* successor(node* cur);
-void delete_fixup( node* cur);
+void delete_fixup(node* cur);
 node* delet(node* nod);
-void printRBT(node *root, int level);
+void printRBT(node* root, int level);
 
 void printreserve(node* root);
 int height(node* root);
@@ -76,10 +76,10 @@ City* ShortestPath(Graph** pgraphs, int depDate, int src, int dst);   // pgraph�
 City* ExtractMin(City** Q, int* qNum);            // ShortestPath내에서만 쓰이는 함수로서 수도코드의 ExtractMin과 동일합니다.
 void SetDepartureTime(Graph** pgraphs, int nowDate);
 void PrintArray(char* arr);         // char array인쇄.
-void PrintResult(Passenger *values);
+void PrintResult(Passenger* values);
 Passenger* module(char* name, char source, char destination, int date, int level);
 
-Graph *pgraph, ** pgraphs;
+Graph* pgraph, ** pgraphs;
 
 
 int main() {
@@ -94,8 +94,8 @@ int main() {
 	int status = 1;
 
 	node* temp = NULL;
-	Passenger *values = NULL;
-	node** latest = (node* *)malloc(sizeof(node*));
+	Passenger* values = NULL;
+	node** latest = (node * *)malloc(sizeof(node*));
 
 	initTree();
 
@@ -134,10 +134,11 @@ int main() {
 			num--;
 			continue;
 		}
-		temp = makenode(num);
-		temp->passenger = values;
-		insert(temp);
-
+		while (1) {
+			temp = makenode(rand()%10000);
+			temp->passenger = values;
+			if (NULL != insert(temp)) break;
+		}
 		if (num >= 490) printreserve(temp);
 	}
 
@@ -155,7 +156,7 @@ int main() {
 		printf("3. Search\n");
 		printf("4. Exit\n");
 
-		
+
 		scanf("%d", &choice);
 
 		switch (choice) {
@@ -189,10 +190,12 @@ int main() {
 				printf("Paths not found!\n");
 				break;
 			}
-			temp = makenode(num);
-			temp->passenger = values;
-			insert(temp);
-
+			while (1) {
+				temp = makenode(num);
+				temp->passenger = values;
+				int a = insert(temp);
+				if (a != NULL) break;
+			}
 			printf("Reservated-------------------------------------------- \n");
 			printreserve(temp);
 
@@ -323,7 +326,7 @@ Graph* CreateGraph(int num) {
 	return pgraph;
 }
 void DestroyGraph(Graph* pgraph) {
-	City* cur, *tmp;
+	City* cur, * tmp;
 	for (int i = 0; i < pgraph->num; i++) {
 		cur = pgraph->heads[i];
 		while (cur != NULL) {
@@ -341,7 +344,7 @@ void AddPath(Graph* pgraph, char src, char dest) {
 		//printf("Path exists!\n");
 		return;
 	}
-	City* newCity1, *newCity2, *head1, *head2, *cur;
+	City* newCity1, * newCity2, * head1, * head2, * cur;
 	int distance;
 	head1 = pgraph->heads[dest - 'a'];
 	head2 = pgraph->heads[src - 'a'];
@@ -382,7 +385,7 @@ void AddPaths(Graph* pgraph, int num) {
 }
 int PathExists(Graph* pgraph, char src, char dst) {
 	int result = 0;
-	City** heads = pgraph->heads, *cur;
+	City** heads = pgraph->heads, * cur;
 	cur = heads[src - 'a'];
 	while (cur->next != NULL) {
 		cur = cur->next;
@@ -396,7 +399,7 @@ int PathExists(Graph* pgraph, char src, char dst) {
 }
 Graph** CreateTimeTable(Graph* pgraph) {
 	Graph** graphs = (Graph * *)malloc(sizeof(Graph*) * (DAYS + 1));
-	City** heads1, ** heads2, *cur1, *cur2, *new;
+	City** heads1, ** heads2, * cur1, * cur2, * new;
 	//
 	for (int i = 0; i < DAYS + 1; i++) {
 		heads1 = pgraph->heads;
@@ -446,7 +449,7 @@ City* ExtractMin(City** Q, int* qNum) {	//모든 City중에서 NeedTime이 가�
 	int min = (1 << 30) - 1, mindex = -1;
 	for (int i = 0; i < *qNum; i++) {
 		if (Q[i]->needTime == -1) continue;
-		if (min >(Q[i]->needTime)) {
+		if (min > (Q[i]->needTime)) {
 			min = Q[i]->needTime;
 			mindex = i;
 		}
@@ -468,7 +471,7 @@ City* ExtractMin(City** Q, int* qNum) {	//모든 City중에서 NeedTime이 가�
 }
 void SetDepartureTime(Graph** pgraphs, int nowDate) {	//해당날짜의 departureTime으로 설정
 														//printf("hihi%d\n", nowDate);
-	City** heads1 = pgraphs[nowDate - 1]->heads, ** heads2 = pgraphs[31]->heads, *adj, *adj2;
+	City** heads1 = pgraphs[nowDate - 1]->heads, ** heads2 = pgraphs[31]->heads, * adj, * adj2;
 	//heads2 = pgraphs[nowDate]->heads;
 	for (int i = 0; i < pgraphs[31]->num; i++) {
 		adj = heads1[i];
@@ -488,7 +491,7 @@ City* ShortestPath(Graph** pgraphs, int depDate, int src, int dst) {
 	Graph* pgraph = pgraphs[31];			//pgraph는 항상 pgraph[31]로 고정, 추후에 departuretime만
 	SetDepartureTime(pgraphs, depDate);		//해당날짜로 바꿔서 계속씀
 	char oldPaths[26] = { 0, };				//paths[26]복원용
-	City** heads = pgraph->heads, ** Q, *u = NULL, *adj, *v;
+	City** heads = pgraph->heads, ** Q, * u = NULL, * adj, * v;
 	Q = (City * *)malloc(sizeof(City*) * pgraph->num);
 	//알고리즘에 따른 City들의 집합 Q구현
 	int qNum = pgraph->num, oldNeedTime, oldPathsNum, arrive, nowDate, oldnowDate;
@@ -573,7 +576,7 @@ node* makenode(int key) {
 	return temp;
 }
 
-void printreserve(node * root) {
+void printreserve(node* root) {
 	if (root == NULL || root->passenger == NULL) return;
 	int hour, min;
 
@@ -631,10 +634,10 @@ void Lrotate(node* cur) {
 	par->parent = cur->parent;
 	if (cur->parent->key < 0)
 		root = par;
-	else if (cur == cur->parent->leftc) {
-		cur->parent->leftc = par;
+	else  {
+		if (cur == cur->parent->leftc) cur->parent->leftc = par;
+		else cur->parent->rightc = par;
 	}
-	else cur->parent->rightc = par;
 	par->leftc = cur;
 	cur->parent = par;
 }
@@ -648,17 +651,17 @@ void Rrotate(node* cur) {
 	par->parent = cur->parent;
 	if (cur->parent->key < 0)
 		root = par;
-	else if (cur == cur->parent->rightc) {
-		cur->parent->rightc = par;
+	else {
+		if (cur == cur->parent->rightc) cur->parent->rightc = par;
+		else cur->parent->leftc = par;
 	}
-	else cur->parent->leftc = par;
 	par->rightc = cur;
 	cur->parent = par;
 }
 
 void insert_fixup(node* cur) {
 	node* y = NULL;
-	
+
 	while (cur != root && cur->parent->color == 1) {
 		if (cur->parent == cur->parent->parent->leftc) {
 			y = cur->parent->parent->rightc;
@@ -685,7 +688,7 @@ void insert_fixup(node* cur) {
 				y->color = 0;
 				cur->parent->parent->color = 1;
 				cur = cur->parent->parent;
-			
+
 			}
 			else {
 				if (cur == cur->parent->leftc) {
@@ -698,7 +701,7 @@ void insert_fixup(node* cur) {
 			}
 		}
 	}
-	
+
 	root->color = 0;
 }
 
@@ -709,10 +712,15 @@ node* insert(node* nod) {
 
 	while (cur != NULL && cur->key >= 0) {
 		par = cur;
+		if (nod->key == cur->key) {
+			return NULL;
+		}
 		if (nod->key < cur->key) {
 			cur = cur->leftc;
 		}
-		else cur = cur->rightc;
+		else {
+			cur = cur->rightc;
+		}
 	}
 	nod->parent = par;
 	if (par->key < 0) {
@@ -854,7 +862,7 @@ node* delet(node* nod) {
 	return root;
 }
 
-void printRBT(node *root, int level) {
+void printRBT(node* root, int level) {
 
 	if (root->key < 0) {
 		for (int i = 0; i < level; i++)
